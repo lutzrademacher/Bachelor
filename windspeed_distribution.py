@@ -10,14 +10,14 @@ from P_W_vin1_P_b import compute_P_Wv_in1, compute_P_b
 
 
 # 1. CP-Tabelle laden (für Berechnung von P_W)
-cp_table = load_cp_table('tsr_cp.csv')
+cp_table_for_P_Wvin1 = load_cp_table('tsr_cp.csv')
 
-# NEU: Zweite CP-Tabelle laden (wird ausschließlich für die Berechnung von P_b verwendet)
-cp_table_for_pb = load_cp_table('tsr_cp.csv')
+# 1.2 Zweite CP-Tabelle laden
+cp_table_for_P_ref = load_cp_table('tsr_cp.csv')
 
 # 2. Fester Referenzwert P_b (in Watt) für v_in0 = 3 m/s berechnen
 # Hier wird die zweite CP-Tabelle verwendet, sodass der cp-Wert für P_b anhand der zweiten Tabelle interpoliert wird.
-P_b = compute_P_b(p.rho, p.R, p.v_in0, p.omega_in0, cp_table_for_pb)
+P_b = compute_P_b(p.rho, p.R, p.v_in0, p.omega_in0, cp_table_for_P_ref)
 print("Referenzleistung P_b (bei 3 m/s): {:.2f} kW".format(P_b / 1000))
 
 # 3. Windgeschwindigkeitsverteilung definieren (statistische Verteilung)
@@ -43,7 +43,7 @@ t = np.linspace(0, 3600, 1000)  # Zeit in Sekunden
 all_base_power_op = []      # Operative Leistung (P_W(vin1)) als Array pro Lauf (in kW)
 all_motor_power_list = []   # Motorleistung (PAM) als Array pro Lauf (in kW)
 all_corrected_power = []    # Korrigierte Leistung (P_W(vin1) - PAM) als Array pro Lauf (in kW)
-all_ref_curve = []          # Referenzleistung (P_b oder P_Wv_in1) als Array pro Lauf (in kW)
+all_ref_power = []          # Referenzleistung P_ref als Array pro Lauf (in kW)
 all_wind_speeds = []        # Die in jedem Lauf generierten Windgeschwindigkeiten
 
 # Neue Listen für integrierte Energien (als Skalarwerte pro Lauf)
@@ -62,21 +62,33 @@ for run in range(n_runs):
     base_power_op = []     # Operative Leistung pro Zeitschritt
     motor_power_list = []  # Motorleistung pro Zeitschritt
     corrected_power = []   # Korrigierte Leistung pro Zeitschritt
-    P_ref = []                # Leistungsababe Referenzanlage
+    ref_power = []                # Leistungsababe Referenzanlage
     
     # Für jeden Zeitschritt (bzw. jeden Windgeschwindigkeitswert) werden die Leistungsgrößen berechnet
     for v in wind_speeds:
         # Berechnung von Lambda und Cp für den aktuellen Windwert
         if v > 0:
             lam = (p.omega_in0 * p.R) / v
-            cp_val = get_cp(lam, cp_table)
+            cp_val = get_cp(lam, cp_table_for_P_Wvin1)
         else:
             lam = 0.0
             cp_val = 0.0
 
         # Berechnung der theoretischen Basisleistung P_Wv_in1 (in Watt)
-        P_Wv_in1 = compute_P_Wv_in1(v, p.rho, p.R, p.omega_in0, cp_table)
+        P_Wv_in1 = compute_P_Wv_in1(v, p.rho, p.R, p.omega_in0, cp_table_for_P_Wvin1)
         
+        """
+5. Für jeden Zeitpunkt: Berechne:
+ - Theoretische Basisleistung P_W(v_in1) (in Watt)
+ - Operative Basisleistung P_W(v_in1):
+     v < 2.40 m/s: P_W(v_in1) = 0 (Anlage aus)
+     2.40 m/s ≤ v < 3 m/s: P_W(v_in1) = P_b (Anlage liefert Referenzleistung)
+     v ≥ 3 m/s: P_W(v_in1) = P_W(v_in1)
+ - Motorleistung PAM: PAM = (P_b - P_W(v_in1)/mu_M (in Watt)
+ - Korrigierte Leistung: P_W(v_in1) - PAM (in Watt)
+ - Referenzleistungskurve: 0 für v < 3 m/s, ansonsten P_ref (in kW)"
+"""
+
         # Bestimmen der operativen Leistung und weiterer Größen abhängig von v
         if v < p.v_off:
             PAW_op = 0.0
@@ -95,19 +107,19 @@ for run in range(n_runs):
         base_power_op.append(PAW_op / 1000)
         motor_power_list.append(PAM / 1000)
         corrected_power.append((PAW_op - PAM) / 1000)
-        P_ref.append(ref_val / 1000)
+        ref_power.append(ref_val / 1000)
     
     # Speichern der Zeitreihen dieses Laufs (als NumPy-Array) in den globalen Listen
     all_base_power_op.append(np.array(base_power_op))
     all_motor_power_list.append(np.array(motor_power_list))
     all_corrected_power.append(np.array(corrected_power))
-    all_ref_curve.append(np.array(P_ref))
+    all_ref_power.append(np.array(ref_power))
     
     # 7. Integrierte Energie (über den Zeitraum) für diesen Lauf in kWh berechnen
     energy_op = np.trapz(base_power_op, t) / 3600
     energy_motor = np.trapz(motor_power_list, t) / 3600
     energy_corr = np.trapz(corrected_power, t) / 3600
-    energy_ref = np.trapz(P_ref, t) / 3600
+    energy_ref = np.trapz(ref_power, t) / 3600
     
     # Integrierte Energien in separaten Listen speichern (als Skalarwerte)
     all_energy_op.append(energy_op)
@@ -130,7 +142,7 @@ print("Mittlere Energie (Referenzleistung, v>=3 m/s): {:.2f} kWh".format(mean_en
 avg_base_power_op    = np.mean(np.array(all_base_power_op), axis=0)
 avg_motor_power_list = np.mean(np.array(all_motor_power_list), axis=0)
 avg_corrected_power  = np.mean(np.array(all_corrected_power), axis=0)
-avg_ref_curve        = np.mean(np.array(all_ref_curve), axis=0)
+avg_ref_curve        = np.mean(np.array(all_ref_power), axis=0)
 avg_wind_speeds      = np.mean(np.array(all_wind_speeds), axis=0)
 
 # ---- Grafik 1: Operative Leistung und Motorleistung + Windgeschwindigkeit ----
@@ -160,7 +172,7 @@ fig2 = plt.figure(figsize=(10, 6))
 gs2 = gridspec.GridSpec(2, 1, height_ratios=[2, 1], hspace=0.05)
 ax2_upper = fig2.add_subplot(gs2[0])
 ax2_upper.plot(t, avg_corrected_power, color='green', linestyle='--', label="Nettoeistung (P_W(vin1) - PAM) (kW)")
-ax2_upper.plot(t, avg_ref_curve, color='black', linestyle=':', label="Vergleichsleistung P_b(vin0) (kW)")
+ax2_upper.plot(t, avg_ref_curve, color='black', linestyle=':', label="Referenzleistung P_ref (kW)")
 ax2_upper.set_ylabel("Leistung (kW)")
 ax2_upper.legend(loc="upper right")
 plt.setp(ax2_upper.get_xticklabels(), visible=False)
