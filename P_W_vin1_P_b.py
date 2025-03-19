@@ -1,6 +1,7 @@
 import csv
 import numpy as np
 from calculate_cp import load_cp_table, get_cp 
+import parameter as p
 
 def compute_P_Wv_in1(v, rho, R, omega_in0, cp_table):
     """
@@ -10,9 +11,9 @@ def compute_P_Wv_in1(v, rho, R, omega_in0, cp_table):
     """
     if v <= 0:
         return 0.0
-    lambda_val = (omega_in0 * R) / v
+    lambda_val = (p.omega_in0 * p.R) / v
     cp_val = get_cp(lambda_val, cp_table)
-    P_Wv_in1 = 0.5 * rho * np.pi * R**2 * (v**3) * cp_val
+    P_Wv_in1 = 0.5 * p.rho * np.pi * p.R**2 * (p.v**3) * cp_val
     return P_Wv_in1
 
 def compute_P_b(rho, R, v_ref, omega_in0, cp_table):
@@ -23,7 +24,7 @@ def compute_P_b(rho, R, v_ref, omega_in0, cp_table):
     wobei CP über die Interpolation berechnet wird:
       lambda_ref = (omega_in0 * R) / v_ref.
     """
-    lambda_ref = (omega_in0 * R) / v_ref
+    lambda_ref = (p.omega_in0 * p.R) / p.v_ref
     cp_val = get_cp(lambda_ref, cp_table)
-    P_b = 0.5 * rho * np.pi * R**2 * (v_ref**3) * cp_val
+    P_b = 0.5 * p.rho * np.pi * p.R**2 * (p.v_ref**3) * cp_val
     return P_b
