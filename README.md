@@ -1,6 +1,6 @@
 Bachelorarbeit – Berechnung der Leistungsabgabe von Windkraftanlagen
 
-Dieses Repository enthält Python-Skripte zur Berechnung und Analyse verschiedener Aspekte der Leistungsabgabe von Windkraftanlagen, speziell im Kontext der Bachelorarbeit zu Fixed-Pitch und Variable-Speed Anlagen.
+Dieses Repository enthält Python-Skripte zur Berechnung und Analyse verschiedener Aspekte der Leistungsabgabe von Windkraftanlagen im Kontext der "Vergleich einer motorunterstützten Stall-regulierten WIndkraftanalge mit einer Pitch-regulierten Windkraftanlage bezüglich ihrer Leistugsabgabe"
 
 Skripte und Funktionen:
 
