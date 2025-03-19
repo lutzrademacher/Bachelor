@@ -2,18 +2,12 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import pandas as pd  # Für die tabellarische Ausgabe
+import pandas as pd 
+import parameter as p
 from motor_power import compute_PAM
 from calculate_cp import load_cp_table, get_cp
 from P_W_vin1_P_b import compute_P_Wv_in1, compute_P_b
 
-# Parameter für die Berechnungen
-v_ref = 3.0        # Bei v >= 3 m/s: Operative Leistung entspricht theoretischer Leistung, sonst P_b (oder 0)
-v_off = 2.40       # Bei v < 2,40 m/s wird die Anlage nicht betrieben (PAW_op = 0)
-rho = 1.225        # Luftdichte (kg/m³)
-R = 63             # Turbinenradius (m)
-omega_in0 = 0.72   # Eingangs-Drehzahl (rad/s)
-mu_M = 0.95        # Wirkungsgrad des Motors
 
 # 1. CP-Tabelle laden (für Berechnung von P_W)
 cp_table = load_cp_table('tsr_cp.csv')
@@ -21,9 +15,9 @@ cp_table = load_cp_table('tsr_cp.csv')
 # NEU: Zweite CP-Tabelle laden (wird ausschließlich für die Berechnung von P_b verwendet)
 cp_table_for_pb = load_cp_table('tsr_cp.csv')
 
-# 2. Fester Referenzwert P_b (in Watt) für v_ref = 3 m/s berechnen
+# 2. Fester Referenzwert P_b (in Watt) für v_in0 = 3 m/s berechnen
 # Hier wird die zweite CP-Tabelle verwendet, sodass der cp-Wert für P_b anhand der zweiten Tabelle interpoliert wird.
-P_b = compute_P_b(rho, R, v_ref, omega_in0, cp_table_for_pb)
+P_b = compute_P_b(p.rho, p.R, p.v_in0, p.omega_in0, cp_table_for_pb)
 print("Referenzleistung P_b (bei 3 m/s): {:.2f} kW".format(P_b / 1000))
 
 # 3. Windgeschwindigkeitsverteilung definieren (statistische Verteilung)
@@ -68,52 +62,52 @@ for run in range(n_runs):
     base_power_op = []     # Operative Leistung pro Zeitschritt
     motor_power_list = []  # Motorleistung pro Zeitschritt
     corrected_power = []   # Korrigierte Leistung pro Zeitschritt
-    ref_curve = []         # Referenzleistungskurve pro Zeitschritt
+    P_ref = []                # Leistungsababe Referenzanlage
     
     # Für jeden Zeitschritt (bzw. jeden Windgeschwindigkeitswert) werden die Leistungsgrößen berechnet
     for v in wind_speeds:
         # Berechnung von Lambda und Cp für den aktuellen Windwert
         if v > 0:
-            lam = (omega_in0 * R) / v
+            lam = (p.omega_in0 * p.R) / v
             cp_val = get_cp(lam, cp_table)
         else:
             lam = 0.0
             cp_val = 0.0
 
         # Berechnung der theoretischen Basisleistung P_Wv_in1 (in Watt)
-        P_Wv_in1 = compute_P_Wv_in1(v, rho, R, omega_in0, cp_table)
+        P_Wv_in1 = compute_P_Wv_in1(v, p.rho, p.R, p.omega_in0, cp_table)
         
         # Bestimmen der operativen Leistung und weiterer Größen abhängig von v
-        if v < v_off:
+        if v < p.v_off:
             PAW_op = 0.0
             PAM = 0.0
             ref_val = 0.0
-        elif v < v_ref:
+        elif v < p.v_in0:
             PAW_op = P_b
-            PAM = compute_PAM(P_Wv_in1, P_b, mu_M)
+            PAM = compute_PAM(P_Wv_in1, P_b, p.eta_M)
             ref_val = 0.0
         else:
             PAW_op = P_Wv_in1
-            PAM = compute_PAM(P_Wv_in1, P_b, mu_M)
+            PAM = compute_PAM(P_Wv_in1, P_b, p.eta_M)
             ref_val = P_Wv_in1
 
         # Umwandeln in kW und speichern
         base_power_op.append(PAW_op / 1000)
         motor_power_list.append(PAM / 1000)
         corrected_power.append((PAW_op - PAM) / 1000)
-        ref_curve.append(ref_val / 1000)
+        P_ref.append(ref_val / 1000)
     
     # Speichern der Zeitreihen dieses Laufs (als NumPy-Array) in den globalen Listen
     all_base_power_op.append(np.array(base_power_op))
     all_motor_power_list.append(np.array(motor_power_list))
     all_corrected_power.append(np.array(corrected_power))
-    all_ref_curve.append(np.array(ref_curve))
+    all_ref_curve.append(np.array(P_ref))
     
     # 7. Integrierte Energie (über den Zeitraum) für diesen Lauf in kWh berechnen
     energy_op = np.trapz(base_power_op, t) / 3600
     energy_motor = np.trapz(motor_power_list, t) / 3600
     energy_corr = np.trapz(corrected_power, t) / 3600
-    energy_ref = np.trapz(ref_curve, t) / 3600
+    energy_ref = np.trapz(P_ref, t) / 3600
     
     # Integrierte Energien in separaten Listen speichern (als Skalarwerte)
     all_energy_op.append(energy_op)

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from motor_power import compute_PAM
 from calculate_cp import load_cp_table, get_cp
-from P_W_vin1_P_b import compute_P_Wv_in1, compute_P_b
+from P_W_vin1_P_b import compute_P_Wv_in1, compute_P_b, compute_P_ref
 import parameter as p
 
 
@@ -12,10 +12,10 @@ import parameter as p
 cp_table_for_P_Wvin1 = load_cp_table('tsr_cp.csv') # Name der .csv für die Leistungsbeiwerte der Stall-Anlage
 
 # 1.2 Zweite CP-Tabelle laden
-cp_table_for_P_b = load_cp_table('tsr_cp.csv') # Name der .csv Datei füt die Leistungskoeffizienten der Pitch-Anlage
+cp_table_for_P_ref = load_cp_table('tsr_cp.csv') # Name der .csv Datei füt die Leistungskoeffizienten der Pitch-Anlage
 
-# 2. Fester Referenzwert P_b (in Watt) für v_ref = 3 m/s berechnen
-P_b = compute_P_b(p.rho, p.R, p.v_ref, p.omega_in0, cp_table_for_P_b)
+# 2. Fester Referenzwert P_b (in Watt) für v = 3 m/s berechnen
+P_b = compute_P_b(p.rho, p.R, p.v_in0, p.omega_in0, cp_table_for_P_ref)
 print("Referenzleistung P_b (bei 3 m/s): {:.2f} kW".format(P_b / 1000))
 
 # 3. Windgeschwindigkeitsverteilung definieren (z.B. Sinusfunktion)
@@ -44,33 +44,38 @@ base_power_theo = []      # Theoretische Basisleistung P_Wv_in1(v_in1) in kW
 base_power_op = []        # Operative Basisleistung P_Wv_in1v_in1 in kW
 motor_power_list = []     # Motorleistung PAM in kW
 corrected_power = []      # Korrigierte Leistung (P_Wv_in1(v_in1) - PAM) in kW
-ref_curve = []            # Referenzleistungskurve: 0 für v < 3 m/s, sonst P_Wv_in1v_in1 (in kW)
+P_ref = []                # Leistungsababe Referenzanlage
 
 for v in wind_speeds:
-    P_Wv_in1v_in1 = compute_P_Wv_in1(v, p.rho, p.R, p.omega_in0, cp_table_for_P_Wvin1)  # in Watt
+    P_Wv_in1 = compute_P_Wv_in1(v, p.rho, p.R, p.omega_in0, cp_table_for_P_Wvin1)  # in Watt
     if v < p.v_off:
         PAW_op = 0.0
         PAM = 0.0
         ref_val = 0.0
-    elif v < p.v_ref:
+    elif v < p.v_in0:
         PAW_op = P_b
-        PAM = compute_PAM(P_Wv_in1v_in1, P_b, p.eta_M)
+        PAM = compute_PAM(P_Wv_in1, P_b, p.eta_M)
         ref_val = 0.0
     else:
-        PAW_op = P_Wv_in1v_in1
-        PAM = compute_PAM(P_Wv_in1v_in1, P_b, p.eta_M)
-        ref_val = P_Wv_in1v_in1
-    base_power_theo.append(P_Wv_in1v_in1 / 1000)   # in kW
+        PAW_op = P_Wv_in1
+        PAM = compute_PAM(P_Wv_in1, P_b, p.eta_M)
+        ref_val = P_Wv_in1
+    if v < p.v_in0:
+        P_ref_val = 0.0
+    else:
+        P_ref_val = compute_P_ref(v, p.rho, p.R, p.omega_in0, cp_table_for_P_ref)
+
+    base_power_theo.append(P_Wv_in1 / 1000)   # in kW
     base_power_op.append(PAW_op / 1000)         # in kW
     motor_power_list.append(PAM / 1000)         # in kW
     corrected_power.append((PAW_op - PAM) / 1000) # in kW
-    ref_curve.append(ref_val / 1000)            # in kW
+    P_ref.append(ref_val / 1000)            # in kW
 
 # 6. Integrierte Energie (über den Zeitraum) für jede Kurve in kWh
 energy_op = np.trapz(base_power_op, t) / 3600
 energy_motor = np.trapz(motor_power_list, t) / 3600
 energy_corr = np.trapz(corrected_power, t) / 3600
-energy_ref = np.trapz(ref_curve, t) / 3600
+energy_ref = np.trapz(P_ref, t) / 3600
 
 print("Gesamte Leistung (P_Wv_in1(vin1) mit Motoruntersützung): {:.2f} kWh".format(energy_op))
 print("Gesamte Leistung (Motorleistung PAM): {:.2f} kWh".format(energy_motor))
@@ -85,7 +90,7 @@ ax1_upper = fig1.add_subplot(gs1[0])
 ax1_lower = fig1.add_subplot(gs1[1], sharex=ax1_upper)
 
 # Obere Achse in Grafik 1: Nur Linien (ohne Marker)
-ax1_upper.plot(t, base_power_op, color='cyan', linestyle='-.', label="P_Wv_in1(v_in1) (kW)")
+ax1_upper.plot(t, base_power_op, color='cyan', linestyle='-.', label="P_W(v_in1) (kW)")
 ax1_upper.plot(t, motor_power_list, color='magenta', linestyle=':', label="PAM (kW)")
 ax1_upper.set_ylabel("Leistung (kW)")
 ax1_upper.legend(loc="upper right")
@@ -110,8 +115,8 @@ ax2_upper = fig2.add_subplot(gs2[0])
 ax2_lower = fig2.add_subplot(gs2[1], sharex=ax2_upper)
 
 # Obere Achse in Grafik 2: Nur Linien (ohne Marker)
-ax2_upper.plot(t, corrected_power, color='green', linestyle='--', label="Nettoleistung P_Wv_in1(v_in1) - PAM (kW)")
-ax2_upper.plot(t, ref_curve, color='black', linestyle=':', label="Vergleichsleistung P_b(v_in0) (kW)")
+ax2_upper.plot(t, corrected_power, color='green', linestyle='--', label="Nettoleistung P_W(v_in1) - PAM (kW)")
+ax2_upper.plot(t, P_ref, color='black', linestyle=':', label="Referenzleistung P_ref (kW)")
 ax2_upper.set_ylabel("Leistung (kW)")
 ax2_upper.legend(loc="upper right")
 plt.setp(ax2_upper.get_xticklabels(), visible=False)
