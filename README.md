@@ -44,5 +44,20 @@ windspeed_function.py
 Berechnet die Leistungsabgabe der Windkraftanlage mit Motorunterstützung und ohne Motorunterstützung basierend auf einer Funktion zur Windgeschwindigkeitsverteilung.
 
 
+tsr_cp.csv
+
+Die für die Berechnungen in der Abschlussarbeit genutzten Leistungsbeiwerte in Abhängigkeit von den TSR 
+
+Begriffserklärung:
+
+P_b = Leistungsabgabe der Windkraftanlage bei ursprünglicher Einschaltgeschwindigkeit
+
+P_ref = Leistungsabgabe der Referrenzanlage 
+
+P_W(v_in1) = Leistungsabgabe der Windkraftanlage mit optimierter Einschaltgeschwidigkeit
+
+PAM = Leistungsabgabe des Motors 
+
+
 
 
