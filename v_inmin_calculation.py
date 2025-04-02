@@ -3,6 +3,8 @@ import numpy as np
 import parameter as p
 from calculate_cp import load_cp_table_lambda, get_cp_lambda
 
+"Iteration zu Berechnung der optimierten Einschaltgeschwindigkeit nach Kapitel 4.4"
+
 
 # Laden der Cp-Tabelle
 cp_table_for_P_Wvin1 = load_cp_table_lambda('tsr_cp.csv')  # Ersetzen Sie 'cp_values.csv' durch den tatsächlichen Dateinamen

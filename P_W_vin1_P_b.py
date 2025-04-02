@@ -3,6 +3,8 @@ import numpy as np
 from calculate_cp import get_cp_v, get_cp_lambda
 import parameter as p
 
+"Berechnung der Leistungsabgaben für Windgeschwindigkeiten größer v_in0 mittels Leistungsbeiwert"
+
 def compute_P_Wv_in1(v, rho, R, cp_table_for_P_Wv_in1):
     """
     Berechnet die theoretische Basisleistung P_Wv_in1 (in Watt) für eine gegebene Windgeschwindigkeit v.
@@ -27,6 +29,21 @@ def compute_P_ref(v, rho, R, cp_table_for_P_ref):
     P_ref = 0.5 * p.rho * np.pi * p.R**2 * (v**3) * cp_val1
     return P_ref
 
+def compute_P_bmin(rho, R, v_in0, cp_table_for_P_ref):
+    """
+    Berechnet den Referenzwert P_bmin (in Watt) bei einer festen Windgeschwindigkeit v_in0.
+    Es gilt: 
+      P_b = 0.5 * rho * π * R^2 * v_in0^3 * CP,
+    wobei CP über die Interpolation berechnet wird:
+      lambda_ref = (omega_in0 * R) / v_in0.
+    """
+    cp_val3 = get_cp_v(v_in0, cp_table_for_P_ref)
+    P_b = 0.5 * p.rho * np.pi * p.R**2 * (p.v_in0**3) * cp_val3
+    return P_b
+
+
+"Berechnung der Leistungsabgaben für Windgeschwindigkeiten < v_in0 mittels Lambda"
+
 def compute_P_Wv_inmin(v, rho, R, omega_in0, cp_table_for_P_Wv_in1):
     """
     Berechnet die theoretische Basisleistung P_Wv_inmin (in Watt) für eine gegebene Windgeschwindigkeit v.
@@ -40,18 +57,6 @@ def compute_P_Wv_inmin(v, rho, R, omega_in0, cp_table_for_P_Wv_in1):
     P_Wv_in1 = 0.5 * p.rho *np.pi * p.R**2 * (v**3) * cp_val2
     return P_Wv_in1
 
-
-def compute_P_bmin(rho, R, v_in0, cp_table_for_P_ref):
-    """
-    Berechnet den Referenzwert P_bmin (in Watt) bei einer festen Windgeschwindigkeit v_in0.
-    Es gilt: 
-      P_b = 0.5 * rho * π * R^2 * v_in0^3 * CP,
-    wobei CP über die Interpolation berechnet wird:
-      lambda_ref = (omega_in0 * R) / v_in0.
-    """
-    cp_val3 = get_cp_v(v_in0, cp_table_for_P_ref)
-    P_b = 0.5 * p.rho * np.pi * p.R**2 * (p.v_in0**3) * cp_val3
-    return P_b
 
 
 

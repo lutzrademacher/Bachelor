@@ -16,7 +16,7 @@ cp_table_for_P_ref = load_cp_table_v("v_cp.csv")
 # Lineare Verteilung der Windgeschwindigkeiten von 2.4 m/s bis 3.0 m/s
 wind_speeds = np.linspace(2.4, 3.0, num=50)
 
-"Berechnung der Aneile von Motorleistung und Windleistung nach Kapitel 4.5"
+"Berechnung der Anteile von Motorleistung und Windleistung nach Kapitel 4.5"
 
 # 2. Fester Referenzwert P_b (in Watt) für v_in0 = 3 m/s berechnen
 P_b = compute_P_bmin(p.rho, p.R, p.v_in0, cp_table_for_P_ref)

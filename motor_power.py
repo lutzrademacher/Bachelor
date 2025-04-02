@@ -6,6 +6,7 @@ from P_W_vin1_P_b import compute_P_bmin, compute_P_Wv_inmin
 # 1.1 CP-Tabelle laden
 cp_table_for_P_Wvin1 = load_cp_table_lambda('tsr_cp.csv') # Name der .csv für die Leistungsbeiwerte der Stall-Anlage
 
+"Berechnung der Motorleistung nach Kapitel 4.5"
 
 def compute_PAM(P_Wv_inmin, P_bmin, mu_M):
     """

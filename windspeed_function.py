@@ -9,32 +9,34 @@ from P_W_vin1_P_b import compute_P_Wv_in1, compute_P_bmin, compute_P_ref, comput
 import parameter as p
 
 
-# 1.1 CP-Tabelle laden
+# 1.1 CP-Tabelle in Abhängigkeit von v für Stall-regulierte WIndkraftanlage laden
 cp_table_for_P_Wv_in1 = load_cp_table_v('v_cp.csv') # Name der .csv für die Leistungsbeiwerte der Stall-Anlage
 
-# 1.2 Zweite CP-Tabelle laden
+# 1.2 CP-Tabelle in Abhängigkeit von v für Pitch-regulierte Windkraftanlage laden
 cp_table_for_P_ref = load_cp_table_v('v_cp.csv') # Name der .csv Datei füt die Leistungskoeffizienten der Pitch-Anlage
 
+# 1.3 CP-Tabelle für Leistungsbeiwerte in Abhängigkeit von Lambda der Stall-regulierten Windkraftanlage laden
 cp_table_for_lambda = load_cp_table_lambda('tsr_cp.csv')
 
-# 2. Fester Referenzwert P_b (in Watt) für v = 3 m/s berechnen
+# 2. Fester Referenzwert P_bmin (in Watt) für v = 3 m/s berechnen
 P_b = compute_P_bmin(p.rho, p.R, p.v_in0, cp_table_for_P_ref)
 print("Referenzleistung P_b (bei 3 m/s): {:.2f} kW".format(P_b / 1000))
+
 
 # 3. Windgeschwindigkeitsverteilung definieren (z.B. Sinusfunktion)
 def wind_speed_formula(t, v_ref, v_amp, periode):
     return v_ref + v_amp * np.sin(2 * np.pi * t / periode)
 
 
-# 4. Simulation: Zeitverlauf und variable Windgeschwindigkeiten
+# 3.1 Simulation: Zeitverlauf und variable Windgeschwindigkeiten
 t = np.linspace(0, 3600, 3600)  # Zeit in Sekunden
-wind_speeds = wind_speed_formula(t, v_ref=6.9, v_amp=4.5, periode=720)
+wind_speeds = wind_speed_formula(t, v_ref=13.7, v_amp=11.3, periode=720)
 wind_speeds = np.maximum(wind_speeds, 0)
 
 
 
 """
-5. Für jeden Zeitpunkt: Berechne:
+4. Für jeden Zeitpunkt: Berechne:
  - Operative Basisleistung P_W(v_in1):
      v < 2.40 m/s: P_W(v_in1) = 0 (Anlage aus)
      2.40 m/s ≤ v < 3 m/s: P_W(v_in1) = P_bmin (Anlage liefert Referenzleistung)
@@ -76,7 +78,7 @@ for v in wind_speeds:
     corrected_power.append((PAW_op - PAM) / 1000) # in kW
     P_ref.append(ref_val / 1000)            # in kW
 
-# 6. Integrierte Energie (über den Zeitraum) für jede Kurve in kWh
+# 5. Integrierte Energie (über den Zeitraum) für jede Kurve in kWh
 energy_op = np.trapezoid(base_power_op, t) / 3600
 energy_motor = np.trapezoid(motor_power_list, t) / 3600
 energy_corr = np.trapezoid(corrected_power, t) / 3600
