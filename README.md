@@ -17,7 +17,7 @@ Berechnet die minimale effektive Einschaltgeschwindigkeit (Cut-in Speed) für di
 
 calculate_cp.py
 
-Berechnet den Leistungsbeiwerts abhängig von verschiedenen Parametern der Windkraftanlage. Es muss eine .csv Datei mit den Leistungsbeiwerten in Abhängigkeit von den TSR (z.B. mittels QBlade erstellen) im Arbeitsarchiv exisiteren.
+Berechnet den Leistungsbeiwerts abhängig von verschiedenen Parametern der Windkraftanlage. Es muss eine .csv Datei mit den Leistungsbeiwerten in Abhängigkeit von den TSR und eine in Abhängigkeit von der Windgeschwindigkeit (z.B. mittels QBlade erstellen) im Arbeitsarchiv exisiteren.
 
 
 P_W_vin1_P_b.py
@@ -49,13 +49,14 @@ v_cp.csv
 
 Die für die Berechnungen genutzten Leistungsbeiwerte in Abhängigkeit von der Windgeschwindigkeit  
 
+
 Begriffserklärung:
 
 P_b = Leistungsabgabe der Windkraftanlage bei ursprünglicher Einschaltgeschwindigkeit
 
 P_ref = Leistungsabgabe der Referrenzanlage 
 
-P_W(v_in1) = Leistungsabgabe der Windkraftanlage mit optimierter Einschaltgeschwidigkeit
+P_W(v_in1) = Leistungsabgabe der Windkraftanlage mit optimierter Einschaltgeschwindigkeit
 
 PAM = Leistungsabgabe des Motors 
 
