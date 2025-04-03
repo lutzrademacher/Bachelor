@@ -1,8 +1,9 @@
 Bachelorarbeit – Berechnung der Leistungsabgabe von Windkraftanlagen
 
-Dieses Repository enthält Python-Skripte zur Berechnung und Analyse verschiedener Aspekte der Leistungsabgabe von Windkraftanlagen im Kontext der "Vergleich einer motorunterstützten Stall-regulierten WIndkraftanalge mit einer Pitch-regulierten Windkraftanlage bezüglich ihrer Leistugsabgabe"
+Dieses Repository enthält Python-Skripte zur Berechnung und Analyse verschiedener Aspekte der Leistungsabgabe von Windkraftanlagen im Zusammenhang mit der Bachelorarbeit "Vergleich einer motorunterstützten Stall-regulierten Windkraftanlage mit einer Pitch-regulierten Windkraftanlage"
 
 Skripte und Funktionen:
+
 
 parameter.py 
 
@@ -34,11 +35,6 @@ Leistungsanteile_berechnung.py
 Führt eine Berechnung der Leistungsanteile von Motorleistung und Windkraft einer Windturbine bei unterschiedlichen Windgeschwindigkeiten durch.
 
 
-windspeed_distribution.py
-
-Berechnet die Leistungsabgabe der Windkraftanlage mit Motorunterstützung und ohne Motorunterstützung basierend auf eine Wahrschienlihckeitsverteilung der Windgeschwindigkeiten.
-
-
 windspeed_function.py
 
 Berechnet die Leistungsabgabe der Windkraftanlage mit Motorunterstützung und ohne Motorunterstützung basierend auf einer Funktion zur Windgeschwindigkeitsverteilung.
@@ -46,7 +42,12 @@ Berechnet die Leistungsabgabe der Windkraftanlage mit Motorunterstützung und oh
 
 tsr_cp.csv
 
-Die für die Berechnungen in der Abschlussarbeit genutzten Leistungsbeiwerte in Abhängigkeit von den TSR 
+Die für die Berechnungen genutzten Leistungsbeiwerte in Abhängigkeit von dem TSR 
+
+
+v_cp.csv
+
+Die für die Berechnungen genutzten Leistungsbeiwerte in Abhängigkeit von der Windgeschwindigkeit  
 
 Begriffserklärung:
 
